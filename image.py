@@ -2,6 +2,7 @@
 from matplotlib import image
 from PIL import Image
 import numpy as np
+from haar import Haar
 
 class Img(object):
     def __init__(self, fileName=None):
@@ -28,6 +29,9 @@ class Img(object):
                 self.integralMat[:,i] = s[:,i]
             else:
                 self.integralMat[:,i] = s[:,i] + self.integralMat[:,i-1]
+
+    def calHaarFeatures(self, haar):
+        self.features = haar.calImgFeatureVal(self.integralMat)
 
     def show(self):
         Image.fromarray(self.mat).show()

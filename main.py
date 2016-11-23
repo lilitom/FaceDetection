@@ -7,7 +7,7 @@ from image import Img
 def main():
     haar = Haar(WINDOW_WIDTH, WINDOW_HEIGHT)
     img = Img("/home/ivan/Documents/FaceDetection/train/face/face00001.bmp")
-    # img.show()
+    img.calHaarFeatures()
 
     pass
 

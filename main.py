@@ -1,6 +1,15 @@
 # coding=utf-8
 
-from image import RawImage
+from haar import Haar
+from setting import WINDOW_HEIGHT, WINDOW_WIDTH
+from image import Img
 
-a = RawImage("./dataset/BioID_0004.pgm")
-a.segment2trainingData()
+def main():
+    haar = Haar(WINDOW_WIDTH, WINDOW_HEIGHT)
+    img = Img("/home/ivan/Documents/FaceDetection/train/face/face00001.bmp")
+    # img.show()
+
+    pass
+
+if __name__ == "__main__":
+    main()

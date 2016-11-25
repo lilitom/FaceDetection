@@ -1,4 +1,5 @@
 # coding=utf-8
+import numpy as np
 
 """
 Haar TYPE
@@ -38,6 +39,7 @@ Haar TYPE
 """
 
 
+
 class Haar(object):
     def __init__(self, img_width, img_height):
         self.IMG_WIDTH  = img_width
@@ -64,6 +66,7 @@ class Haar(object):
         :return: [(type, x, y, w, h),
                   (type, x, y, w, h),
                   ...]
+                  notice: x,y are the coordinates in the image instead of integral image
         """
 
         WIDTH_LIMIT  = {
@@ -79,8 +82,8 @@ class Haar(object):
         for w in range(1, WIDTH_LIMIT[type]+1):
             for h in range(1, HEIGHT_LIMIT[type]+1):
 
-                if w == 1 and h == 1:
-                    continue
+                # if w == 1 and h == 1:
+                #     continue
 
                 if type == "HAAR_TYPE_I":
                     x_limit = self.WINDOW_WIDTH  - w
@@ -95,5 +98,30 @@ class Haar(object):
         :param IntegralMat: the integral value of the image
         :return: a list including values of all features
         """
-        pass
+        featureVal = np.zeros(len(self.features))
 
+        for feature_index in range(len(self.features)):
+            type, x, y, w, h = self.features[feature_index]
+            if type == "HAAR_TYPE_I":
+                pos = self.getPixelValInIntegralMat(x, y,   w, h, IntegralMat)
+                neg = self.getPixelValInIntegralMat(x, y+h, w, h, IntegralMat)
+                if feature_index == 0:
+                    print(pos,neg)
+                featureVal[feature_index] = pos - neg
+        return featureVal
+
+    def getPixelValInIntegralMat(self, x, y, w, h, integralMat):
+        """
+        x,y are the coordinates in the image
+        :param integralMat:
+        :return:
+        """
+        if x == 0 and y == 0:
+            return integralMat[y+h-1][x+w-1]
+        elif x == 0:
+            return integralMat[y+h-1][x+w-1] - integralMat[y-1][x+w-1]
+        elif y == 0:
+            return integralMat[y+h-1][x+w-1] - integralMat[y+h-1][x-1]
+        else:
+            return integralMat[y+h-1][x+w-1] + integralMat[y-1][x-1] \
+                -  integralMat[y-1][x+w-1]   - integralMat[y+h-1][x-1]

@@ -19,19 +19,8 @@ class Img(object):
         self.HEIGHT = self.mat.shape[0]
 
     def _calIntegralMat(self):
-        s = self.mat.copy().astype("float32")
-        for i in range(1, s.shape[0]):
-            s[i,:] = s[i,:] + s[i-1,:]
+        self.integralMat = self.mat.astype('float64').cumsum(axis=1).cumsum(axis=0)
 
-        self.integralMat = np.zeros(self.mat.shape).astype("float32")
-        for i in range(0, self.integralMat.shape[1]):
-            if i == 0:
-                self.integralMat[:,i] = s[:,i]
-            else:
-                self.integralMat[:,i] = s[:,i] + self.integralMat[:,i-1]
-
-    def calHaarFeatures(self, haar):
-        self.features = haar.calImgFeatureVal(self.integralMat)
 
     def show(self):
         Image.fromarray(self.mat).show()

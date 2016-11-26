@@ -1,19 +1,39 @@
 # coding=utf-8
-
-from haar import Haar
-from setting import WINDOW_HEIGHT, WINDOW_WIDTH
-from image import Img
 from time import time
-from matplotlib import image
-from PIL import Image
+from features import loadFeatures
+from numpy import random
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.metrics import accuracy_score
 def main():
     starttime = time()
-    haar = Haar(WINDOW_WIDTH, WINDOW_HEIGHT)
+    featureMat = loadFeatures()
+    print("features loading over...")
+    random.shuffle(featureMat)
+    print(featureMat.shape)
 
-    img = Img("./train/face/face00001.bmp")
-    featureVal = haar.calImgFeatureVal(img.integralMat)
+
+    train_data  = featureMat[:1000, :-1]
+    train_label = featureMat[:1000,  -1]
+    test_data   = featureMat[1000:6000, :-1]
+    test_label  = featureMat[1000:6000,  -1]
+
+    clf = AdaBoostClassifier(n_estimators=200)
+    clf.fit(train_data, train_label)
+
+    print("training over...")
+
+    pred = clf.predict(test_data)
+
+    for i in range(len(pred)):
+        print((pred[i], test_label[i]))
+    print(accuracy_score(test_label, pred))
+
     endtime = time()
-    print(len(featureVal))
+
+    print(endtime-starttime)
+
+
+
 
 
     pass

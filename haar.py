@@ -70,28 +70,67 @@ class Haar(object):
         """
 
         WIDTH_LIMIT  = {
-            "HAAR_TYPE_I" : self.WINDOW_WIDTH,
+            "HAAR_TYPE_I"   : self.WINDOW_WIDTH,
+            "HAAR_TYPE_II"  : int(self.WINDOW_WIDTH/2),
+            "HAAR_TYPE_III" : int(self.WINDOW_WIDTH/3),
+            "HAAR_TYPE_IV"  : self.WINDOW_WIDTH,
+            "HAAR_TYPE_V"   : int(self.WINDOW_WIDTH/2)
         }
 
         HEIGHT_LIMIT = {
-            "HAAR_TYPE_I" : int(self.WINDOW_HEIGHT/2),
+            "HAAR_TYPE_I"   : int(self.WINDOW_HEIGHT/2),
+            "HAAR_TYPE_II"  : self.WINDOW_HEIGHT,
+            "HAAR_TYPE_III" : self.WINDOW_HEIGHT,
+            "HAAR_TYPE_IV"  : int(self.WINDOW_HEIGHT/3),
+            "HAAR_TYPE_V"   : int(self.WINDOW_HEIGHT/2)
         }
 
-        type = "HAAR_TYPE_I"
-        # for type in self.HAAR_TYPES:
-        for w in range(1, WIDTH_LIMIT[type]+1):
-            for h in range(1, HEIGHT_LIMIT[type]+1):
+        for type in self.HAAR_TYPES:
+            for w in range(1, WIDTH_LIMIT[type]+1):
+                for h in range(1, HEIGHT_LIMIT[type]+1):
 
-                # if w == 1 and h == 1:
-                #     continue
+                    if type == "HAAR_TYPE_I":
+                        x_limit = self.WINDOW_WIDTH  - w
+                        y_limit = self.WINDOW_HEIGHT - 2*h
 
-                if type == "HAAR_TYPE_I":
-                    x_limit = self.WINDOW_WIDTH  - w
-                    y_limit = self.WINDOW_HEIGHT - 2*h
+                        for x in range(0, x_limit+1):
+                            for y in range(0, y_limit+1):
+                                self.features.append([type, x, y, w, h])
 
-                    for x in range(0, x_limit+1):
-                        for y in range(0, y_limit+1):
-                            self.features.append([type, x, y, w, h])
+                    if type == "HAAR_TYPE_II":
+                        x_limit = self.WINDOW_WIDTH - 2*w
+                        y_limit = self.WINDOW_HEIGHT - h
+
+                        for x in range(0, x_limit+1):
+                            for y in range(0, y_limit+1):
+                                self.features.append([type, x, y, w, h])
+
+                    if type == "HAAR_TYPE_III":
+                        x_limit = self.WINDOW_WIDTH - 3*w
+                        y_limit = self.WINDOW_HEIGHT - h
+
+                        for x in range(0, x_limit+1):
+                            for y in range(0, y_limit+1):
+                                self.features.append([type, x, y, w, h])
+
+                    if type == "HAAR_TYPE_IV":
+                        x_limit = self.WINDOW_WIDTH - w
+                        y_limit = self.WINDOW_HEIGHT - 3*h
+
+                        for x in range(0, x_limit+1):
+                            for y in range(0, y_limit+1):
+                                self.features.append([type, x, y, w, h])
+
+                    if type == "HAAR_TYPE_V":
+                        x_limit = self.WINDOW_WIDTH - 2*w
+                        y_limit = self.WINDOW_HEIGHT - 2*h
+
+                        for x in range(0, x_limit+1):
+                            for y in range(0, y_limit+1):
+                                self.features.append([type, x, y, w, h])
+
+
+
 
     def calImgFeatureVal(self, IntegralMat):
         """
@@ -102,12 +141,40 @@ class Haar(object):
 
         for feature_index in range(len(self.features)):
             type, x, y, w, h = self.features[feature_index]
+
             if type == "HAAR_TYPE_I":
                 pos = self.getPixelValInIntegralMat(x, y,   w, h, IntegralMat)
                 neg = self.getPixelValInIntegralMat(x, y+h, w, h, IntegralMat)
-                if feature_index == 0:
-                    print(pos,neg)
+
                 featureVal[feature_index] = pos - neg
+            elif type == "HAAR_TYPE_II":
+                neg = self.getPixelValInIntegralMat(x,   y, w, h, IntegralMat)
+                pos = self.getPixelValInIntegralMat(x+w, y, w, h, IntegralMat)
+
+                featureVal[feature_index] = pos - neg
+            elif type == "HAAR_TYPE_III":
+                neg1 = self.getPixelValInIntegralMat(x,     y,  w, h, IntegralMat)
+                pos  = self.getPixelValInIntegralMat(x+w,   y,  w, h, IntegralMat)
+                neg2 = self.getPixelValInIntegralMat(x+2*w, y,  w, h, IntegralMat)
+
+                featureVal[feature_index] = pos - neg1 - neg2
+
+            elif type == "HAAR_TYPE_IV":
+                neg1 = self.getPixelValInIntegralMat(x, y,     w, h, IntegralMat)
+                pos  = self.getPixelValInIntegralMat(x, y+h,   w, h, IntegralMat)
+                neg2 = self.getPixelValInIntegralMat(x, y+2*h, w, h, IntegralMat)
+
+                featureVal[feature_index] = pos - neg1 - neg2
+
+            elif type == "HAAR_TYPE_V":
+                neg1 = self.getPixelValInIntegralMat(x,   y,   w, h, IntegralMat)
+                pos1 = self.getPixelValInIntegralMat(x+w, y,   w, h, IntegralMat)
+                pos2 = self.getPixelValInIntegralMat(x,   y+h, w, h, IntegralMat)
+                neg2 = self.getPixelValInIntegralMat(x+w, y+h, w, h, IntegralMat)
+
+                featureVal[feature_index] = pos1 + pos2 - neg1 - neg2
+
+
         return featureVal
 
     def getPixelValInIntegralMat(self, x, y, w, h, integralMat):

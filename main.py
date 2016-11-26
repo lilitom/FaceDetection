@@ -13,11 +13,7 @@ def main():
     img = Img("./train/face/face00001.bmp")
     featureVal = haar.calImgFeatureVal(img.integralMat)
     endtime = time()
-    print(haar.features[-1])
-    print(featureVal[-1])
-    print(img.mat)
-    print(endtime-starttime)
-
+    print(len(featureVal))
 
 
     pass

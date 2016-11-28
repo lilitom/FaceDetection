@@ -5,14 +5,17 @@ import numpy as np
 from haar import Haar
 
 class Img(object):
-    def __init__(self, fileName=None):
+    def __init__(self, fileName=None, mat=None, calIntegral=True):
 
         self.mat         = None
         self.integralMat = None
-        self.label       = None
 
         if fileName is not None:
             self.mat = image.imread(fileName)
+        elif mat is not None:
+            self.mat = mat
+
+        if calIntegral:
             self._calIntegralMat()
 
         self.WIDTH  = self.mat.shape[1]

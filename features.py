@@ -2,7 +2,7 @@
 import os
 import multiprocessing
 from haar import Haar
-from setting import WINDOW_HEIGHT, WINDOW_WIDTH, TRAIN_FACE, TRAIN_NON_FACE, FEATURE_FILE, FACE, NON_FACE
+from setting import WINDOW_HEIGHT, WINDOW_WIDTH, TRAIN_FACE, TRAIN_NON_FACE, FEATURE_CACHE_FILE, FACE, NON_FACE
 from image import Img
 import numpy as np
 import threading
@@ -13,7 +13,7 @@ def loadImage(indexlist, trainFiles, mat, haar):
     while len(indexlist) != 0:
         index = indexlist.pop()
         print(index)
-        img = Img(trainFiles[index])
+        img = Img(fileName=trainFiles[index])
         mat[index, :-1] = haar.calImgFeatureVal(img.integralMat)
         if TRAIN_NON_FACE in trainFiles[index]:
             mat[index,-1] = NON_FACE
@@ -42,7 +42,7 @@ def saveFeatures():
     """save the features to file
     """
     featureMat = getFeatures()
-    featureFile = open(FEATURE_FILE, "wb")
+    featureFile = open(FEATURE_CACHE_FILE, "wb")
     pickle.dump(featureMat, featureFile, -1)
     featureFile.close()
 
@@ -50,7 +50,7 @@ def loadFeatures():
     """load
     :return:
     """
-    featureFile = open(FEATURE_FILE, "rb")
+    featureFile = open(FEATURE_CACHE_FILE, "rb")
     featureMat = pickle.load(featureFile)
     featureFile.close()
     return featureMat

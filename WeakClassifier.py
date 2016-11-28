@@ -1,5 +1,6 @@
 # coding=utf-8
 import numpy as np
+from time import time
 
 from setting import FACE, NON_FACE
 
@@ -15,34 +16,55 @@ class WeakClassifier(object):
     def fit(self, X, W, Y):
         """To minimize the weighted error function
         :param X: A matrix sampleNum * DimensionNum
-        :param W: Weight corresponding to each dimension 1*DimensionNum
-        :param Y: the label of each sample
+        :param W: Weight corresponding to each sample DimensionNum*1
+        :param Y: the label of each sample shape:sampleNum*1
         :return: minWeightError
         """
         dimensionNum = X.shape[1]
-
-        FaceWeightSum    = W[np.where(Y ==     FACE)].sum()
-        NonFaceWeightSum = W[np.where(Y == NON_FACE)].sum()
+        FaceIndex    = np.where(Y==FACE)[0]
+        NonFaceIndex = np.where(Y==NON_FACE)[0]
+        FaceWeightSum    = W[FaceIndex].sum()
+        NonFaceWeightSum = W[NonFaceIndex].sum()
+        weakStartTime = time()
+        predTem = np.zeros((Y.shape[0], 1))
         for dim in range(dimensionNum):
-            thresholds = set(X[:,dim])
-            for threshold in thresholds:
-                for direction in [1, -1]:
-                    FaceWeightSumBeforeTh    = W[np.intersect1d(np.where(Y==FACE),
-                                            np.where(X[:, dim]*direction <  threshold*direction))].sum()
-                    NonFaceWeightSumBeforeTh = W[np.intersect1d(np.where(Y==NON_FACE),
-                                            np.where(X[:, dim]*direction >= threshold*direction))].sum()
+            if dim !=0  and dim %1000 == 0:
+                print(str(dim) + "dim...")
+            FaceWeightValSum    = (W[FaceIndex, 0] * X[FaceIndex, dim]).sum()
+            NonFaceWeightValSum = (W[NonFaceIndex, 0] * X[NonFaceIndex, dim]).sum()
 
-                    tempWeightError = min(FaceWeightSumBeforeTh + (NonFaceWeightSum-NonFaceWeightSumBeforeTh),
-                                          NonFaceWeightSumBeforeTh + (FaceWeightSum-FaceWeightSumBeforeTh))
-                    if tempWeightError < self.weightError:
-                        self.weightError = tempWeightError
-                        self.dimension = dim
-                        self.direction = direction
-                        self.threshold = threshold
+            threshold = (FaceWeightValSum/FaceWeightSum + NonFaceWeightValSum/NonFaceWeightSum) / 2
+            for direction in [1, -1]:
+                #
+                # FaceWeightSumBeforeTh    = W[np.intersect1d(FaceIndex,
+                #                         np.where(X[:, dim] <  threshold)[0])].sum()
+                #
+                # NonFaceWeightSumBeforeTh = W[np.intersect1d(NonFaceIndex,
+                #                         np.where(X[:, dim] >= threshold)[0])].sum()
+                #
+                # tempWeightError = min(FaceWeightSumBeforeTh + (NonFaceWeightSum-NonFaceWeightSumBeforeTh),
+                #                       NonFaceWeightSumBeforeTh + (FaceWeightSum-FaceWeightSumBeforeTh))
+
+                predTem[X[:, dim] * direction < threshold * direction, :] = FACE
+                predTem[X[:, dim] * direction >= threshold * direction, :] = NON_FACE
+                tempWeightError = W[predTem != Y].sum()
+
+                if tempWeightError < self.weightError:
+                    self.weightError = tempWeightError
+                    self.dimension = dim
+                    self.direction = direction
+                    self.threshold = threshold
+
+        weakEndTime = time()
+        print("weak.."+str(weakEndTime-weakStartTime))
+        if self.weightError < 0.0001:
+            self.weightError = 0.0001
+        print(self.weightError)
+        print("weakClassifier."+str(self.direction)+" "+str(self.threshold)+" "+str(self.dimension))
         return self.weightError
 
     def predict(self, X):
-        pred = np.ones(X.shape[0]) * NON_FACE
-        pred[X[:,self.dimension] * self.direction < self.threshold * self.direction] = FACE
+        pred = np.ones((X.shape[0], 1)) * NON_FACE
+        pred[X[:, self.dimension] * self.direction < self.threshold * self.direction, :] = FACE
 
         return pred

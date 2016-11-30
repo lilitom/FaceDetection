@@ -148,7 +148,8 @@ class Detector(object):
             sqMeanVal     = sqSumVal / (w * h)
             normFactorVal = np.sqrt(sqMeanVal - meanVal ** 2)
 
-
+            if normFactorVal == 0:
+                normFactorVal = 1
 
             for f in range(len(self.selectedFeatures)):
                 type, x, y, w, h, dimension = self.selectedFeatures[f]

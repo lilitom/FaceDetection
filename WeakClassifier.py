@@ -13,6 +13,7 @@ class WeakClassifier(object):
         self.threshold   = None
         self.dimension   = None
         self.weightError = np.inf
+
     def fit(self, X, W, Y):
         """To minimize the weighted error function
         :param X: A matrix sampleNum * DimensionNum

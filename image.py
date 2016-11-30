@@ -22,8 +22,9 @@ class Img(object):
         self.HEIGHT = self.mat.shape[0]
 
     def _calIntegralMat(self):
+        """calculate the integral matrix
+        """
         self.integralMat = self.mat.astype('float64').cumsum(axis=1).cumsum(axis=0)
-
 
     def show(self):
         Image.fromarray(self.mat).show()

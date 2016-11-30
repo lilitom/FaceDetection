@@ -18,7 +18,7 @@ def getModel():
 
     return clf
 
-def saveModel():
+def calAndSaveModel():
     """save trained model as a cache file
     :return:
     """

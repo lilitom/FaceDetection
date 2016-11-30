@@ -15,7 +15,6 @@ class Adaboost(object):
         """
         :param X:
         :param Y: shape:sampleNum * 1
-        :return:
         """
         sampleNum = X.shape[0]
         # weight shape:
@@ -44,6 +43,8 @@ class Adaboost(object):
         return pred
 
     def predict_prob(self, X):
+        """return the probability of each sample
+        """
         pred = np.zeros((X.shape[0], 1), dtype='float32')
         for i in range(self.n_estimators):
             weakOutput = self.weakClassifiers[i].predict(X)

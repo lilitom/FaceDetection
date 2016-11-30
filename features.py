@@ -14,7 +14,7 @@ def loadImageAndCalFeatureVal(indexlist, trainFiles, mat, haar):
         index = indexlist.pop()
         print(index)
         img = Img(fileName=trainFiles[index])
-        mat[index, :-1] = haar.calImgFeatureVal(img.integralMat)
+        mat[index, :-1] = haar.calImgFeatureVal(img.integralMat, img.mat)
         if TRAIN_NON_FACE in trainFiles[index]:
             mat[index,-1] = NON_FACE
         else:
@@ -38,7 +38,7 @@ def getFeatures():
     t.join()
     return featureValMat
 
-def saveFeatures():
+def calAndSaveFeatures():
     """save the features as a cache file
     """
     featureMat = getFeatures()
@@ -48,7 +48,6 @@ def saveFeatures():
 
 def loadFeatures():
     """load Features Matrix
-    :return:
     """
     featureFile = open(FEATURE_CACHE_FILE, "rb")
     featureMat = pickle.load(featureFile)

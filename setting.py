@@ -12,8 +12,8 @@ TEST           = "./test/"
 TEST_RESULT    = "./result/"
 
 
-FEATURE_CACHE_FILE  = "./cache/featuresWithAvg"
-MODEL_CACHE_FILE    = "./cache/modelWithAvg"
+FEATURE_CACHE_FILE  = "./cache/normFeatures"
+MODEL_CACHE_FILE    = "./cache/modelWithNorm"
 
 FACE     = 1
 NON_FACE = -1

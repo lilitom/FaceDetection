@@ -8,8 +8,12 @@ WINDOW_HEIGHT = 19
 TRAIN_FACE     = "./train/face/"
 TRAIN_NON_FACE = "./train/non_face/"
 
-FEATURE_CACHE_FILE  = "./cache/features"
-MODEL_CACHE_FILE    = "./cache/model"
+TEST           = "./test/"
+TEST_RESULT    = "./result/"
+
+
+FEATURE_CACHE_FILE  = "./cache/featuresWithAvg"
+MODEL_CACHE_FILE    = "./cache/modelWithAvg"
 
 FACE     = 1
 NON_FACE = -1

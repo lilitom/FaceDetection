@@ -2,7 +2,7 @@
 import numpy as np
 
 """
-Haar TYPE
+Haar Feature TYPE
 
      --- ---
     |   +   |
@@ -66,7 +66,7 @@ class Haar(object):
         :return: [(type, x, y, w, h),
                   (type, x, y, w, h),
                   ...]
-                  notice: x,y are the coordinates in the image instead of integral image
+                  notice: x,y are the coordinates in the image Matrix instead of the integral image Matrix
         """
 
         WIDTH_LIMIT  = {
@@ -142,29 +142,31 @@ class Haar(object):
         for feature_index in range(len(self.features)):
             type, x, y, w, h = self.features[feature_index]
 
+
+
             if type == "HAAR_TYPE_I":
                 pos = self.getPixelValInIntegralMat(x, y,   w, h, IntegralMat)
                 neg = self.getPixelValInIntegralMat(x, y+h, w, h, IntegralMat)
 
-                featureVal[feature_index] = pos - neg
+                featureVal[feature_index] = (pos - neg)/(2*w*h)
             elif type == "HAAR_TYPE_II":
                 neg = self.getPixelValInIntegralMat(x,   y, w, h, IntegralMat)
                 pos = self.getPixelValInIntegralMat(x+w, y, w, h, IntegralMat)
 
-                featureVal[feature_index] = pos - neg
+                featureVal[feature_index] = (pos - neg)/(2*w*h)
             elif type == "HAAR_TYPE_III":
                 neg1 = self.getPixelValInIntegralMat(x,     y,  w, h, IntegralMat)
                 pos  = self.getPixelValInIntegralMat(x+w,   y,  w, h, IntegralMat)
                 neg2 = self.getPixelValInIntegralMat(x+2*w, y,  w, h, IntegralMat)
 
-                featureVal[feature_index] = pos - neg1 - neg2
+                featureVal[feature_index] = (pos - neg1 - neg2)/(3*w*h)
 
             elif type == "HAAR_TYPE_IV":
                 neg1 = self.getPixelValInIntegralMat(x, y,     w, h, IntegralMat)
                 pos  = self.getPixelValInIntegralMat(x, y+h,   w, h, IntegralMat)
                 neg2 = self.getPixelValInIntegralMat(x, y+2*h, w, h, IntegralMat)
 
-                featureVal[feature_index] = pos - neg1 - neg2
+                featureVal[feature_index] = (pos - neg1 - neg2)/(3*w*h)
 
             elif type == "HAAR_TYPE_V":
                 neg1 = self.getPixelValInIntegralMat(x,   y,   w, h, IntegralMat)
@@ -172,14 +174,14 @@ class Haar(object):
                 pos2 = self.getPixelValInIntegralMat(x,   y+h, w, h, IntegralMat)
                 neg2 = self.getPixelValInIntegralMat(x+w, y+h, w, h, IntegralMat)
 
-                featureVal[feature_index] = pos1 + pos2 - neg1 - neg2
+                featureVal[feature_index] = (pos1 + pos2 - neg1 - neg2)/(4*w*h)
 
 
         return featureVal
 
     def getPixelValInIntegralMat(self, x, y, w, h, integralMat):
         """
-        x,y are the coordinates in the image
+        x,y are the coordinates in the image matrix
         :param integralMat:
         :return:
         """

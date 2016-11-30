@@ -34,7 +34,6 @@ class Adaboost(object):
 
     def predict(self, X):
 
-
         pred = np.zeros((X.shape[0], 1))
         for i in range(self.n_estimators):
             weakOutput = self.weakClassifiers[i].predict(X)
@@ -43,6 +42,15 @@ class Adaboost(object):
         pred[np.where(pred <= 0)] = NON_FACE
 
         return pred
+
+    def predict_prob(self, X):
+        pred = np.zeros((X.shape[0], 1), dtype='float32')
+        for i in range(self.n_estimators):
+            weakOutput = self.weakClassifiers[i].predict(X)
+            pred = pred + weakOutput * self.alpha[i]
+
+        return pred
+
 
 
 

@@ -9,7 +9,7 @@ import threading
 import pickle
 
 
-def loadImage(indexlist, trainFiles, mat, haar):
+def loadImageAndCalFeatureVal(indexlist, trainFiles, mat, haar):
     while len(indexlist) != 0:
         index = indexlist.pop()
         print(index)
@@ -22,7 +22,7 @@ def loadImage(indexlist, trainFiles, mat, haar):
 
 def getFeatures():
     """load images and calculate the features
-    :return:
+    :return: Matrix
     """
     trainNonFaceFiles = [TRAIN_NON_FACE + i for i in os.listdir(TRAIN_NON_FACE)]
     trainFaceFiles = [TRAIN_FACE + i for i in os.listdir(TRAIN_FACE)]
@@ -32,14 +32,14 @@ def getFeatures():
 
     indexlist = [i for i in range(len(trainFaceFiles)+len(trainNonFaceFiles))]
     for i in range(multiprocessing.cpu_count()):
-        t = threading.Thread(target=loadImage, args=(indexlist, trainFaceFiles+trainNonFaceFiles, \
+        t = threading.Thread(target=loadImageAndCalFeatureVal, args=(indexlist, trainFaceFiles+trainNonFaceFiles, \
                                                      featureValMat, haar))
         t.start()
     t.join()
     return featureValMat
 
 def saveFeatures():
-    """save the features to file
+    """save the features as a cache file
     """
     featureMat = getFeatures()
     featureFile = open(FEATURE_CACHE_FILE, "wb")
@@ -47,7 +47,7 @@ def saveFeatures():
     featureFile.close()
 
 def loadFeatures():
-    """load
+    """load Features Matrix
     :return:
     """
     featureFile = open(FEATURE_CACHE_FILE, "rb")

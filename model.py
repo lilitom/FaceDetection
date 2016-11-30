@@ -10,16 +10,16 @@ def getModel():
     print("features loading over...")
     random.shuffle(featureMat)
 
-    train_data  = featureMat[:1500, :-1]
-    train_label = featureMat[:1500,  -1].reshape(-1, 1)
+    train_data  = featureMat[:5000, :-1]
+    train_label = featureMat[:5000,  -1].reshape(-1, 1)
 
-    clf = Adaboost(n_estimators=130, debug=True)
+    clf = Adaboost(n_estimators=200, debug=True)
     clf.fit(train_data, train_label)
 
     return clf
 
 def saveModel():
-    """save trained model to the file
+    """save trained model as a cache file
     :return:
     """
     model = getModel()

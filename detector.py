@@ -1,7 +1,7 @@
 # coding=utf-8
 from PIL import Image
 from matplotlib import image
-from setting import WINDOW_WIDTH, WINDOW_HEIGHT, FACE, NON_FACE
+from setting import WINDOW_WIDTH, WINDOW_HEIGHT, FACE, NON_FACE, TEST_RESULT
 from image import Img
 import  numpy as np
 from adaboost import Adaboost
@@ -13,10 +13,10 @@ from setting import WINDOW_HEIGHT, WINDOW_WIDTH
 class Detector(object):
     def __init__(self, model):
 
-        self.DETECT_START = 1.
+        self.DETECT_START = 5.
         self.DETECT_END   = 9.
-        self.DETECT_STEP  = 1
-        self.DETECT_STEP_FACTOR = 4
+        self.DETECT_STEP  = 0.4
+        self.DETECT_STEP_FACTOR = 10
 
         self.haar = Haar(WINDOW_WIDTH, WINDOW_HEIGHT)
 
@@ -33,7 +33,7 @@ class Detector(object):
 
 
 
-    def detectFace(self, fileName):
+    def detectFace(self, fileName, _show=True, _save=False):
         img = Img(fileName, calIntegral=False)
 
         scaledWindows = []
@@ -44,16 +44,52 @@ class Detector(object):
         scaledWindows = np.array(scaledWindows)
 
         # detect whether the scaledWindows are face
-        faceWindows = self._detectScaledWindow(scaledWindows, img)
-        self.show(img.mat, faceWindows)
+        predWindow = self._detectScaledWindow(scaledWindows, img)
+        optimalWindow = self._optimalWindow(predWindow)
+        print(optimalWindow)
+        mostProbWindow = self._getMostProbWindow(predWindow)
+
+        if _show:
+            self.show(img.mat, mostProbWindow)
+        if _save:
+            self.save(img.mat, mostProbWindow, fileName)
+
+    def _getMostProbWindow(self, predWindow):
+        mostProb = -np.inf
+        mostProbWindow = np.array([])
+        for i in predWindow:
+            if i[-1] > mostProb:
+                mostProbWindow = i
+                mostProb = i[-1]
+        print(mostProbWindow)
+        return [mostProbWindow]
 
     def show(self, imageMat, faceWindows):
+        """show the result of detection
+        :param imageMat:
+        :param faceWindows:
+        :return:
+        """
+        if faceWindows[0].shape[0] == 0:
+            Image.fromarray(imageMat).show()
+            return
         for i in range(len(faceWindows)):
-            window_x, window_y, window_w, window_h, scale = faceWindows[i]
-            self._drawLing(imageMat, int(window_x), int(window_y), int(window_w), int(window_h))
+            window_x, window_y, window_w, window_h, scale, prob = faceWindows[i]
+            self._drawLine(imageMat, int(window_x), int(window_y), int(window_w), int(window_h))
         Image.fromarray(imageMat).show()
 
-    def _drawLing(self, imageMat, x, y, w, h):
+    def save(self, imageMat, faceWindows, originFileName):
+        if faceWindows[0].shape[0] == 0:
+            return
+        for i in range(len(faceWindows)):
+            window_x, window_y, window_w, window_h, scale, prob = faceWindows[i]
+            self._drawLine(imageMat, int(window_x), int(window_y), int(window_w), int(window_h))
+        Image.fromarray(imageMat).save((TEST_RESULT + "detected" +
+                                        originFileName.split('\\')[-1]).replace("pgm", "bmp") )
+
+
+
+    def _drawLine(self, imageMat, x, y, w, h):
         """draw the boundary of the face in the image
         """
         imageMat[y,     x:x+w] = 0
@@ -63,6 +99,12 @@ class Detector(object):
 
 
     def _detectInScale(self, scale, img, scaledWindows):
+        """
+        :param scale:
+        :param img:
+        :param scaledWindows:
+        :return:
+        """
         SCALED_WINDOW_WIDTH  = int(WINDOW_WIDTH  * scale)
         SCALED_WINDOW_HEIGHT = int(WINDOW_HEIGHT * scale)
 
@@ -76,6 +118,11 @@ class Detector(object):
                 scaledWindows.append((x, y, SCALED_WINDOW_WIDTH, SCALED_WINDOW_HEIGHT, scale))
 
     def _detectScaledWindow(self, scaledWindows, img):
+        """detect each of scaledWindow
+        :param scaledWindows:
+        :param img:
+        :return:
+        """
         scaledWindowsMat = np.zeros((scaledWindows.shape[0], len(self.haar.features)), dtype='float32')
 
         for window in range(scaledWindows.shape[0]):
@@ -92,7 +139,6 @@ class Detector(object):
                 if type == "HAAR_TYPE_I":
                     pos = self.haar.getPixelValInIntegralMat(x, y, w, h, subWindowImgIntegral)
                     neg = self.haar.getPixelValInIntegralMat(x, y + h, w, h, subWindowImgIntegral)
-
                     scaledWindowsMat[window][dimension] = (pos - neg)/(w * h * 2)
                 elif type == "HAAR_TYPE_II":
                     neg = self.haar.getPixelValInIntegralMat(x, y, w, h, subWindowImgIntegral)
@@ -121,12 +167,82 @@ class Detector(object):
 
                     scaledWindowsMat[window][dimension] = (pos1 + pos2 - neg1 - neg2) / (w * h * 4)
 
-        pred = self.model.predict(scaledWindowsMat)
-        index = np.where(pred == FACE)
-        print(scaledWindows.shape)
-        print(scaledWindows[np.where(pred == FACE)[0]].shape)
+        pred = self.model.predict_prob(scaledWindowsMat)
+        indexs = np.where(pred > 0)[0]
+        predWindow = np.zeros((len(indexs), scaledWindows.shape[1]+1), dtype=object)
+        for i in range(len(indexs)):
+            predWindow[i] = np.append(scaledWindows[indexs[i]], pred[indexs[i]])
 
-        return scaledWindows[np.where(pred == FACE)[0]]
+        return predWindow
+
+    def _optimalWindow(self, predWindow):
+        """optimize the windows according to the situations of overlapping...
+        :param predWindow: (x, y, w, h, scale, prob)
+        :return:
+        """
+        optimalWindowMap = np.array([i for i in range(predWindow.shape[0])])
+
+        for i in range(predWindow.shape[0]):
+            for j in range(i+1, predWindow.shape[0]):
+                overlap = False
+                contain = False
+
+                if self._windowInAnotherWindow(predWindow[i], predWindow[j]):
+                    # optimalWindowMap[np.where(optimalWindowMap == optimalWindowMap[i])] = optimalWindowMap[j]
+                    contain = True
+                elif self._windowInAnotherWindow(predWindow[j], predWindow[i]):
+                    # optimalWindowMap[np.where(optimalWindowMap == optimalWindowMap[j])] = optimalWindowMap[i]
+                    contain = True
+                else:
+                    for x in [predWindow[i][0], predWindow[i][0] + predWindow[i][2]]:
+                        for y in [predWindow[i][1], predWindow[i][1] + predWindow[i][3]]:
+                            if self._pointInWindow((x, y), predWindow[j]):
+                                overlap = True
+                                break
+                    for x in [predWindow[j][0], predWindow[j][0] + predWindow[j][2]]:
+                        for y in [predWindow[j][1], predWindow[j][1] + predWindow[j][3]]:
+                            if self._pointInWindow((x, y), predWindow[i]):
+                                overlap = True
+                                break
+
+                if overlap or contain:
+                    if predWindow[i][-1] == max(predWindow[i][-1], predWindow[j][-1]):
+                        optimalWindowMap[np.where(optimalWindowMap == optimalWindowMap[j])] = optimalWindowMap[i]
+
+                    else:
+                        optimalWindowMap[np.where(optimalWindowMap == optimalWindowMap[i])] = optimalWindowMap[j]
+
+        optimalWindow = np.zeros(len(set(optimalWindowMap)), dtype=object)
+        index = 0
+        for i in set(optimalWindowMap):
+            optimalWindow[index] = predWindow[i]
+            index = index + 1
+        return optimalWindow
+
+    def _pointInWindow(self, point, window):
+        """
+        :param point: (x, y)
+        :param window: (x, y, w, h, scale, prob)
+        :return:
+        """
+        if point[0] >= window[0] and point[0] <= window[0] + window[2]:
+            if point[1] >= window[1] and point[1] <= window[1] + window[3]:
+                return True
+        return False
+
+
+    def _windowInAnotherWindow(self, window, anotherWindow):
+        """
+        :param window: (x, y, w, h, scale, prob)
+        :param anotherWindow: (x, y, w, h, scale, prob)
+        :return:
+        """
+        if self._pointInWindow((window[0], window[1]), anotherWindow):
+            if self._pointInWindow((window[0]+window[2], window[1]), anotherWindow):
+                if self._pointInWindow((window[0], window[1]+window[3]), anotherWindow):
+                    if self._pointInWindow((window[0]+window[2], window[1]+window[3]), anotherWindow):
+                        return True
+        return False
 
 
 

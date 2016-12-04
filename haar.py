@@ -135,39 +135,40 @@ class Haar(object):
         for feature_index in range(len(self.features)):
             type, x, y, w, h = self.features[feature_index]
 
-            #normalization
-            sumVal        = sum(sum(mat[y:y+h, x:x+w]))
-            sqSumVal      = sum(sum(mat[y:y+h, x:x+w] ** 2))
-            meanVal       = sumVal   / (w * h)
-            sqMeanVal     = sqSumVal / (w * h)
-            normFactorVal = np.sqrt(sqMeanVal - meanVal ** 2)
-            if normFactorVal == 0:
-                normFactorVal = 1
+            # #normalization
+            # sumVal        = sum(sum(mat[y:y+h, x:x+w]))
+            # sqSumVal      = sum(sum(mat[y:y+h, x:x+w] ** 2))
+            # meanVal       = sumVal   / (w * h)
+            # sqMeanVal     = sqSumVal / (w * h)
+            #
+            # normFactorVal = np.sqrt(sqMeanVal - meanVal ** 2)
+            # if normFactorVal == 0:
+            #     normFactorVal = 1
 
 
             if type == "HAAR_TYPE_I":
                 pos = self.getPixelValInIntegralMat(x, y,   w, h, IntegralMat)
                 neg = self.getPixelValInIntegralMat(x, y+h, w, h, IntegralMat)
 
-                featureVal[feature_index] = (pos - neg)/normFactorVal
+                featureVal[feature_index] = (pos - neg) / (2 * w * h)
             elif type == "HAAR_TYPE_II":
                 neg = self.getPixelValInIntegralMat(x,   y, w, h, IntegralMat)
                 pos = self.getPixelValInIntegralMat(x+w, y, w, h, IntegralMat)
 
-                featureVal[feature_index] = (pos - neg)/normFactorVal
+                featureVal[feature_index] = (pos - neg) / (2 * w * h)
             elif type == "HAAR_TYPE_III":
                 neg1 = self.getPixelValInIntegralMat(x,     y,  w, h, IntegralMat)
                 pos  = self.getPixelValInIntegralMat(x+w,   y,  w, h, IntegralMat)
                 neg2 = self.getPixelValInIntegralMat(x+2*w, y,  w, h, IntegralMat)
 
-                featureVal[feature_index] = (2*pos - neg1 - neg2)/normFactorVal
+                featureVal[feature_index] = (2*pos - neg1 - neg2)/ (3 * w * h)
 
             elif type == "HAAR_TYPE_IV":
                 neg1 = self.getPixelValInIntegralMat(x, y,     w, h, IntegralMat)
                 pos  = self.getPixelValInIntegralMat(x, y+h,   w, h, IntegralMat)
                 neg2 = self.getPixelValInIntegralMat(x, y+2*h, w, h, IntegralMat)
 
-                featureVal[feature_index] = (2*pos - neg1 - neg2)/normFactorVal
+                featureVal[feature_index] = (2*pos - neg1 - neg2) / (3 * w * h)
 
             elif type == "HAAR_TYPE_V":
                 neg1 = self.getPixelValInIntegralMat(x,   y,   w, h, IntegralMat)
@@ -175,7 +176,7 @@ class Haar(object):
                 pos2 = self.getPixelValInIntegralMat(x,   y+h, w, h, IntegralMat)
                 neg2 = self.getPixelValInIntegralMat(x+w, y+h, w, h, IntegralMat)
 
-                featureVal[feature_index] = (pos1 + pos2 - neg1 - neg2)/normFactorVal
+                featureVal[feature_index] = (pos1 + pos2 - neg1 - neg2) / (4 * w * h)
 
 
         return featureVal

@@ -1,7 +1,7 @@
 # coding=utf-8
 from PIL import Image
 from matplotlib import image
-from setting import WINDOW_WIDTH, WINDOW_HEIGHT, FACE, NON_FACE, TEST_RESULT
+from setting import WINDOW_WIDTH, WINDOW_HEIGHT, FACE, NON_FACE, TEST_RESULT_PIC, TEST_RESULT_INFO
 from image import Img
 import  numpy as np
 from adaboost import Adaboost
@@ -11,6 +11,7 @@ from haar import Haar
 from setting import WINDOW_HEIGHT, WINDOW_WIDTH
 
 class Detector(object):
+
     def __init__(self, model):
 
         self.DETECT_START = 5.
@@ -24,7 +25,7 @@ class Detector(object):
         self.selectedFeatures = [None for i in range(model.n_estimators)]
         self._selectFeatures()
 
-    def detectFace(self, fileName, _show=True, _save=False):
+    def detectFace(self, fileName, _show=True, _save=False, _saveInfo=False):
         """
         :param fileName: 
         :param _show: 
@@ -33,8 +34,9 @@ class Detector(object):
         """
         img = Img(fileName, calIntegral=False)
 
-        scaledWindows = []
         #scaledWindows: [[window_x, window_y, window_w, window_h, window_scale],...]
+        scaledWindows = []
+
         for scale in np.arange(self.DETECT_START, self.DETECT_END, self.DETECT_STEP):
             self._detectInDiffScale(scale, img, scaledWindows)
 
@@ -51,6 +53,8 @@ class Detector(object):
             self.show(img.mat, mostProbWindow)
         if _save:
             self.save(img.mat, mostProbWindow, fileName)
+        if _saveInfo:
+            self.saveProbWindowInfo(mostProbWindow, fileName)
 
     def show(self, imageMat, faceWindows):
         """show the result of detection
@@ -72,8 +76,14 @@ class Detector(object):
         for i in range(len(faceWindows)):
             window_x, window_y, window_w, window_h, scale, prob = faceWindows[i]
             self._drawLine(imageMat, int(window_x), int(window_y), int(window_w), int(window_h))
-        Image.fromarray(imageMat).save((TEST_RESULT + "detected" +
-                                        originFileName.split('\\')[-1]).replace("pgm", "bmp") )
+        Image.fromarray(imageMat).save((TEST_RESULT_PIC + "detected" +
+                                        originFileName.split('/')[-1]).replace("pgm", "bmp") )
+
+    def saveProbWindowInfo(self, window, originFileName):
+        with open((TEST_RESULT_INFO  +
+                                        originFileName.split('/')[-1]).replace("pgm", "pts"), "w") as f:
+            f.write(str(window[0][0]) + " " + str(window[0][1]) + " " + str(window[0][2]) + " " + str(window[0][3]))
+
 
     def _selectFeatures(self):
         """ select the features according to Adaboost classifier
@@ -141,15 +151,15 @@ class Detector(object):
                                            window_x : window_x+window_w])
             subWindowImgIntegral  = subWindowImg.integralMat
 
-            #normalization
-            sumVal        = sum(sum(subWindowImg.mat[y:y+h, x:x+w]))
-            sqSumVal      = sum(sum(subWindowImg.mat[y:y+h, x:x+w] ** 2))
-            meanVal       = sumVal   / (w * h)
-            sqMeanVal     = sqSumVal / (w * h)
-            normFactorVal = np.sqrt(sqMeanVal - meanVal ** 2)
-
-            if normFactorVal == 0:
-                normFactorVal = 1
+            # #normalization
+            # sumVal        = sum(sum(subWindowImg.mat[y:y+h, x:x+w]))
+            # sqSumVal      = sum(sum(subWindowImg.mat[y:y+h, x:x+w] ** 2))
+            # meanVal       = sumVal   / (w * h)
+            # sqMeanVal     = sqSumVal / (w * h)
+            # normFactorVal = np.sqrt(sqMeanVal - meanVal ** 2)
+            #
+            # if normFactorVal == 0:
+            #     normFactorVal = 1
 
             for f in range(len(self.selectedFeatures)):
                 type, x, y, w, h, dimension = self.selectedFeatures[f]
@@ -158,25 +168,25 @@ class Detector(object):
                 if type == "HAAR_TYPE_I":
                     pos = self.haar.getPixelValInIntegralMat(x, y, w, h, subWindowImgIntegral)
                     neg = self.haar.getPixelValInIntegralMat(x, y + h, w, h, subWindowImgIntegral)
-                    scaledWindowsMat[window][dimension] = (pos - neg)/normFactorVal
+                    scaledWindowsMat[window][dimension] = (pos - neg) / (2 * w * h)
                 elif type == "HAAR_TYPE_II":
                     neg = self.haar.getPixelValInIntegralMat(x, y, w, h, subWindowImgIntegral)
                     pos = self.haar.getPixelValInIntegralMat(x + w, y, w, h, subWindowImgIntegral)
 
-                    scaledWindowsMat[window][dimension] = (pos - neg)/normFactorVal
+                    scaledWindowsMat[window][dimension] = (pos - neg) / (2 * w * h)
                 elif type == "HAAR_TYPE_III":
                     neg1 = self.haar.getPixelValInIntegralMat(x, y, w, h, subWindowImgIntegral)
                     pos  = self.haar.getPixelValInIntegralMat(x + w, y, w, h, subWindowImgIntegral)
                     neg2 = self.haar.getPixelValInIntegralMat(x + 2 * w, y, w, h, subWindowImgIntegral)
 
-                    scaledWindowsMat[window][dimension] = (2*pos - neg1 - neg2)/normFactorVal
+                    scaledWindowsMat[window][dimension] = (pos - neg1 - neg2) / (3 * w * h)
 
                 elif type == "HAAR_TYPE_IV":
                     neg1 = self.haar.getPixelValInIntegralMat(x, y, w, h, subWindowImgIntegral)
                     pos  = self.haar.getPixelValInIntegralMat(x, y + h, w, h, subWindowImgIntegral)
                     neg2 = self.haar.getPixelValInIntegralMat(x, y + 2 * h, w, h, subWindowImgIntegral)
 
-                    scaledWindowsMat[window][dimension] = (2*pos - neg1 - neg2)/normFactorVal
+                    scaledWindowsMat[window][dimension] = (pos - neg1 - neg2) / (3 * w * h)
 
                 elif type == "HAAR_TYPE_V":
                     neg1 = self.haar.getPixelValInIntegralMat(x, y, w, h, subWindowImgIntegral)
@@ -184,7 +194,7 @@ class Detector(object):
                     pos2 = self.haar.getPixelValInIntegralMat(x, y + h, w, h, subWindowImgIntegral)
                     neg2 = self.haar.getPixelValInIntegralMat(x + w, y + h, w, h, subWindowImgIntegral)
 
-                    scaledWindowsMat[window][dimension] = (pos1 + pos2 - neg1 - neg2) / normFactorVal
+                    scaledWindowsMat[window][dimension] = (pos1 + pos2 - neg1 - neg2) / (4 * w * h)
 
         pred = self.model.predict_prob(scaledWindowsMat)
         indexs = np.where(pred > 0)[0]

@@ -28,7 +28,7 @@ def main():
 
     print("detecting...")
     index = 0
-    for i in os.listdir(TEST):
+    for i in os.listdir(TEST)[1328:]:
         print("detecting " + str(index) + "th...")
         print(TEST+i)
         detector.detectFace(TEST + i, _show=False, _save=True, _saveInfo=True)

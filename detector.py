@@ -82,7 +82,8 @@ class Detector(object):
     def saveProbWindowInfo(self, window, originFileName):
         with open((TEST_RESULT_INFO  +
                                         originFileName.split('/')[-1]).replace("pgm", "pts"), "w") as f:
-            f.write(str(window[0][0]) + " " + str(window[0][1]) + " " + str(window[0][2]) + " " + str(window[0][3]))
+            if len(window[0] > 0 ):
+                f.write(str(window[0][0]) + " " + str(window[0][1]) + " " + str(window[0][2]) + " " + str(window[0][3]))
 
 
     def _selectFeatures(self):
